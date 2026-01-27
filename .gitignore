@@ -10,7 +10,7 @@
 *-Ex.R
 # Output files from R CMD build
 /*.tar.gz
-# Output files from R CMD check
+# Output files from R CMD pdf
 /*.Rcheck/
 # RStudio files
 .Rproj.user/
@@ -89,6 +89,7 @@ Model_Runs/temp
 *.upa
 *.upb
 report/*.pdf
+report/*/*.pdf
 *.aux
 *.log
 *.toc
