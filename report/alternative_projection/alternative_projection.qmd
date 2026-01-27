@@ -240,7 +240,7 @@ wide_table3 <- dplyr::full_join(
     gsub("yyyy", 'alt HCR', x)
   }) 
 
-table_cap <- glue::glue("Adopted {assess_year} benchmark assessment projection and projection with an alternative HCR for {alt_years[1]} and {alt_years[2]}. Table includes OFLs (mt), buffer for the alternative HCR, ABCs (mt), actual & assumed catch (mt), ACLs (mt), and stock status (fraction of unfished spawning output) given the removals. The gray shading indicates values associated with the proposed alternative HCR. For {assess_year + 4} and beyond, the default HCR with 40-10 rule and P* of {p_star} is assumed")
+table_cap <- glue::glue("Adopted {assess_year} benchmark assessment projection and projection with an alternative HCR for {alt_years[1]} and {alt_years[2]}. Table includes OFLs (mt), buffer for the alternative HCR, ABCs (mt), actual & assumed catch (mt), ACLs (mt), and stock status (fraction of unfished spawning output) given the removals. The gray shading indicates values associated with the default HCR. For {assess_year + 4} and beyond, the default HCR with a P* of {p_star} is assumed")
 ```
 
 <!-- ::: {.landscape} -->
