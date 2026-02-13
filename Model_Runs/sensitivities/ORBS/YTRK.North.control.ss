@@ -1,5 +1,5 @@
 #C file created using an r4ss function
-#C file write time: 2025-04-18  13:57:12
+#C file write time: 2026-01-30  12:13:58
 #
 0 # 0 means do not read wtatage.ss; 1 means read and usewtatage.ss and also read and use growth parameters
 1 #_N_Growth_Patterns
@@ -122,7 +122,7 @@
 #
 #_Q_setup for fleets with cpue or survey data
 #_fleet	link	link_info	extra_se	biasadj	float  #  fleetname
-    3	1	0	0	0	0	#_Recreational
+    3	1	0	1	0	0	#_Recreational
     4	1	0	1	0	0	#_H&L_survey  
     5	1	0	1	0	0	#_Triennial   
     6	1	0	1	0	0	#_WCGBTS      
@@ -130,15 +130,16 @@
 -9999	0	0	0	0	0	#_terminator  
 #_Q_parms(if_any);Qunits_are_ln(q)
 #_LO	HI	INIT	PRIOR	PR_SD	PR_type	PHASE	env-var	use_dev	dev_mnyr	dev_mxyr	dev_PH	Block	Blk_Fxn  #  parm_name
--30	 15	-1	0	1	0	  2	0	0	0	0	0	0	0	#_LnQ_base_Recreational(3)
--30	 15	-1	0	1	0	  2	0	0	0	0	0	0	0	#_LnQ_base_H&L_survey(4)  
-  0	0.5	 0	0	1	0	-99	0	0	0	0	0	0	0	#_Q_extraSD_H&L_survey(4) 
--30	 15	-1	0	1	0	  2	0	0	0	0	0	0	0	#_LnQ_base_Triennial(5)   
-  0	0.5	 0	0	1	0	-99	0	0	0	0	0	0	0	#_Q_extraSD_Triennial(5)  
--30	 15	-1	0	1	0	  2	0	0	0	0	0	0	0	#_LnQ_base_WCGBTS(6)      
-  0	0.5	 0	0	1	0	-99	0	0	0	0	0	0	0	#_Q_extraSD_WCGBTS(6)     
--30	 15	-1	0	1	0	  2	0	0	0	0	0	0	0	#_LnQ_base_SMURF(7)       
-  0	0.5	 0	0	1	0	-99	0	0	0	0	0	0	0	#_Q_extraSD_SMURF(7)      
+-30	 15	-1	0	1	0	  2	0	0	0	0	0	0	0	#_LnQ_base_Recreational(3) 
+  0	0.5	 0	0	1	0	-99	0	0	0	0	0	0	0	#_Q_extraSD_Recreational(3)
+-30	 15	-1	0	1	0	  2	0	0	0	0	0	0	0	#_LnQ_base_H&L_survey(4)   
+  0	0.5	 0	0	1	0	-99	0	0	0	0	0	0	0	#_Q_extraSD_H&L_survey(4)  
+-30	 15	-1	0	1	0	  2	0	0	0	0	0	0	0	#_LnQ_base_Triennial(5)    
+  0	0.5	 0	0	1	0	-99	0	0	0	0	0	0	0	#_Q_extraSD_Triennial(5)   
+-30	 15	-1	0	1	0	  2	0	0	0	0	0	0	0	#_LnQ_base_WCGBTS(6)       
+  0	0.5	 0	0	1	0	-99	0	0	0	0	0	0	0	#_Q_extraSD_WCGBTS(6)      
+-30	 15	-1	0	1	0	  2	0	0	0	0	0	0	0	#_LnQ_base_SMURF(7)        
+  0	0.5	 0	0	1	0	-99	0	0	0	0	0	0	0	#_Q_extraSD_SMURF(7)       
 #_no timevary Q parameters
 #
 #_size_selex_patterns

@@ -1,5 +1,5 @@
 #C file created using an r4ss function
-#C file write time: 2026-01-30  12:14:35
+#C file write time: 2026-01-30  12:14:44
 #
 0 # 0 means do not read wtatage.ss; 1 means read and usewtatage.ss and also read and use growth parameters
 1 #_N_Growth_Patterns
@@ -31,8 +31,8 @@
 #
 # setup for M, growth, maturity, fecundity, recruitment distibution, movement
 #
-0 #_natM_type:_0=1Parm; 1=N_breakpoints;_2=Lorenzen;_3=agespecific;_4=agespec_withseasinterpolate;_5=Maunder_M;_6=Age-range_Lorenzen
-#_no additional input for selected M option; read 1P per morph
+2 #_natM_type:_0=1Parm; 1=N_breakpoints;_2=Lorenzen;_3=agespecific;_4=agespec_withseasinterpolate;_5=Maunder_M;_6=Age-range_Lorenzen
+10 #_reference age for Lorenzen M; later read 1P per Sex x G Morph
 1 # GrowthModel: 1=vonBert with L1&L2; 2=Richards with L1&L2; 3=age_specific_K_incr; 4=age_specific_K_decr;5=age_specific_K_each; 6=NA; 7=NA; 8=growth cessation
 2 #_Age(post-settlement)_for_L1;linear growth below this
 25 #_Growth_Age_for_L2 (999 to use as Linf)
@@ -167,22 +167,22 @@
   -5	70	     70	0	99	0	 -4	0	0	0	0	0	0	0	#_SizeSel_P_4_Commercial(1)        
 -999	25	   -999	0	99	0	-99	0	0	0	0	0	0	0	#_SizeSel_P_5_Commercial(1)        
 -999	25	   -999	0	99	0	-99	0	0	0	0	0	0	0	#_SizeSel_P_6_Commercial(1)        
- -10	10	      0	0	99	0	  6	0	0	0	0	0	0	0	#_SizeSel_PMalOff_1_Commercial(1)  
- -10	10	      0	0	99	0	  6	0	0	0	0	0	0	0	#_SizeSel_PMalOff_2_Commercial(1)  
+ -10	10	      0	0	99	0	-99	0	0	0	0	0	0	0	#_SizeSel_PMalOff_1_Commercial(1)  
+ -10	10	      0	0	99	0	-99	0	0	0	0	0	0	0	#_SizeSel_PMalOff_2_Commercial(1)  
  -10	10	      0	0	99	0	-99	0	0	0	0	0	0	0	#_SizeSel_PMalOff_3_Commercial(1)  
  -10	10	      0	0	99	0	-99	0	0	0	0	0	0	0	#_SizeSel_PMalOff_4_Commercial(1)  
-   0	 2	      1	0	99	0	  6	0	0	0	0	0	0	0	#_SizeSel_PMalOff_5_Commercial(1)  
+   0	 2	      1	0	99	0	-99	0	0	0	0	0	0	0	#_SizeSel_PMalOff_5_Commercial(1)  
   20	55	     55	0	99	0	-99	0	0	0	0	0	2	2	#_SizeSel_P_1_At-Sea-Hake(2)       
  -20	70	     70	0	99	0	 -4	0	0	0	0	0	0	0	#_SizeSel_P_2_At-Sea-Hake(2)       
   -5	20	 4.2846	0	99	0	  3	0	0	0	0	0	2	2	#_SizeSel_P_3_At-Sea-Hake(2)       
   -5	70	     70	0	99	0	 -4	0	0	0	0	0	0	0	#_SizeSel_P_4_At-Sea-Hake(2)       
 -999	25	   -999	0	99	0	-99	0	0	0	0	0	0	0	#_SizeSel_P_5_At-Sea-Hake(2)       
 -999	25	   -999	0	99	0	-99	0	0	0	0	0	0	0	#_SizeSel_P_6_At-Sea-Hake(2)       
- -10	10	      0	0	99	0	  6	0	0	0	0	0	0	0	#_SizeSel_PMalOff_1_At-Sea-Hake(2) 
- -10	10	      0	0	99	0	  6	0	0	0	0	0	0	0	#_SizeSel_PMalOff_2_At-Sea-Hake(2) 
+ -10	10	      0	0	99	0	-99	0	0	0	0	0	0	0	#_SizeSel_PMalOff_1_At-Sea-Hake(2) 
+ -10	10	      0	0	99	0	-99	0	0	0	0	0	0	0	#_SizeSel_PMalOff_2_At-Sea-Hake(2) 
  -10	10	      0	0	99	0	-99	0	0	0	0	0	0	0	#_SizeSel_PMalOff_3_At-Sea-Hake(2) 
  -10	10	      0	0	99	0	-99	0	0	0	0	0	0	0	#_SizeSel_PMalOff_4_At-Sea-Hake(2) 
-   0	 2	      1	0	99	0	  6	0	0	0	0	0	0	0	#_SizeSel_PMalOff_5_At-Sea-Hake(2) 
+   0	 2	      1	0	99	0	-99	0	0	0	0	0	0	0	#_SizeSel_PMalOff_5_At-Sea-Hake(2) 
   20	55	 30.811	0	99	0	  6	0	0	0	0	0	1	2	#_SizeSel_P_1_Recreational(3)      
  -20	70	    -20	0	99	0	 -4	0	0	0	0	0	0	0	#_SizeSel_P_2_Recreational(3)      
   -5	20	  3.173	0	99	0	  6	0	0	0	0	0	0	0	#_SizeSel_P_3_Recreational(3)      
@@ -211,22 +211,22 @@
   -5	70	     70	0	99	0	 -4	0	0	0	0	0	0	0	#_SizeSel_P_4_Triennial(5)         
 -999	25	   -999	0	99	0	-99	0	0	0	0	0	0	0	#_SizeSel_P_5_Triennial(5)         
 -999	25	   -999	0	99	0	-99	0	0	0	0	0	0	0	#_SizeSel_P_6_Triennial(5)         
- -10	10	      0	0	99	0	  6	0	0	0	0	0	0	0	#_SizeSel_PMalOff_1_Triennial(5)   
- -10	10	      0	0	99	0	  6	0	0	0	0	0	0	0	#_SizeSel_PMalOff_2_Triennial(5)   
+ -10	10	      0	0	99	0	-99	0	0	0	0	0	0	0	#_SizeSel_PMalOff_1_Triennial(5)   
+ -10	10	      0	0	99	0	-99	0	0	0	0	0	0	0	#_SizeSel_PMalOff_2_Triennial(5)   
  -10	10	      0	0	99	0	-99	0	0	0	0	0	0	0	#_SizeSel_PMalOff_3_Triennial(5)   
  -10	10	      0	0	99	0	-99	0	0	0	0	0	0	0	#_SizeSel_PMalOff_4_Triennial(5)   
-   0	 2	      1	0	99	0	  6	0	0	0	0	0	0	0	#_SizeSel_PMalOff_5_Triennial(5)   
+   0	 2	      1	0	99	0	-99	0	0	0	0	0	0	0	#_SizeSel_PMalOff_5_Triennial(5)   
   20	55	49.7058	0	99	0	  1	0	0	0	0	0	0	0	#_SizeSel_P_1_WCGBTS(6)            
  -20	70	     70	0	99	0	 -4	0	0	0	0	0	0	0	#_SizeSel_P_2_WCGBTS(6)            
   -5	20	4.53247	0	99	0	  3	0	0	0	0	0	0	0	#_SizeSel_P_3_WCGBTS(6)            
   -5	70	     70	0	99	0	 -4	0	0	0	0	0	0	0	#_SizeSel_P_4_WCGBTS(6)            
 -999	25	   -999	0	99	0	-99	0	0	0	0	0	0	0	#_SizeSel_P_5_WCGBTS(6)            
 -999	25	   -999	0	99	0	-99	0	0	0	0	0	0	0	#_SizeSel_P_6_WCGBTS(6)            
- -10	10	      0	0	99	0	  6	0	0	0	0	0	0	0	#_SizeSel_PMalOff_1_WCGBTS(6)      
- -10	10	      0	0	99	0	  6	0	0	0	0	0	0	0	#_SizeSel_PMalOff_2_WCGBTS(6)      
+ -10	10	      0	0	99	0	-99	0	0	0	0	0	0	0	#_SizeSel_PMalOff_1_WCGBTS(6)      
+ -10	10	      0	0	99	0	-99	0	0	0	0	0	0	0	#_SizeSel_PMalOff_2_WCGBTS(6)      
  -10	10	      0	0	99	0	-99	0	0	0	0	0	0	0	#_SizeSel_PMalOff_3_WCGBTS(6)      
  -10	10	      0	0	99	0	-99	0	0	0	0	0	0	0	#_SizeSel_PMalOff_4_WCGBTS(6)      
-   0	 2	      1	0	99	0	  6	0	0	0	0	0	0	0	#_SizeSel_PMalOff_5_WCGBTS(6)      
+   0	 2	      1	0	99	0	-99	0	0	0	0	0	0	0	#_SizeSel_PMalOff_5_WCGBTS(6)      
 #_AgeSelex
 #_No age_selex_parm
 # timevary selex parameters 
