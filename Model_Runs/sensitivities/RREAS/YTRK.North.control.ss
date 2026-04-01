@@ -1,5 +1,5 @@
 #C file created using an r4ss function
-#C file write time: 2026-01-30  12:28:21
+#C file write time: 2026-04-01  14:06:45
 #
 0 # 0 means do not read wtatage.ss; 1 means read and usewtatage.ss and also read and use growth parameters
 1 #_N_Growth_Patterns
@@ -125,7 +125,6 @@
     4	1	0	1	0	0	#_H&L_survey
     5	1	0	1	0	0	#_Triennial 
     6	1	0	1	0	0	#_WCGBTS    
-    7	1	0	1	0	0	#_SMURF     
     8	1	0	0	0	0	#_RREAS     
 -9999	0	0	0	0	0	#_terminator
 #_Q_parms(if_any);Qunits_are_ln(q)
@@ -136,9 +135,7 @@
   0	0.5	 0	0	1	0	-99	0	0	0	0	0	0	0	#_Q_extraSD_Triennial(5)    
 -30	 15	-1	0	1	0	  2	0	0	0	0	0	0	0	#_LnQ_base_WCGBTS(6)        
   0	0.5	 0	0	1	0	-99	0	0	0	0	0	0	0	#_Q_extraSD_WCGBTS(6)       
--30	 15	-1	0	1	0	  2	0	0	0	0	0	0	0	#_LnQ_base_SMURF(7)         
-  0	0.5	 0	0	1	0	-99	0	0	0	0	0	0	0	#_Q_extraSD_SMURF(7)        
--30	 15	-1	0	1	0	  2	0	0	0	0	0	0	0	#_LnQ_base_H&L_survey(4)...9
+-30	 15	-1	0	1	0	  2	0	0	0	0	0	0	0	#_LnQ_base_H&L_survey(4)...7
 #_no timevary Q parameters
 #
 #_size_selex_patterns

@@ -5,13 +5,12 @@ library(ggplot2)
 model_directory <- 'model_runs'
 base_model_name <- '5.09_no_extra_se'
 exe_loc <- here('model_runs/ss3.exe')
-base_model <- SS_read(file.path(model_directory, base_model_name))
+base_model <- SS_read(file.path(model_directory, base_model_name), ss_new = TRUE)
 base_out <- SS_output(
   file.path(model_directory, base_model_name),
   SpawnOutputLabel = "Spawning output (trillions of eggs)",
   printstats = FALSE,
-  verbose = FALSE,
-  covar =FALSE
+  verbose = FALSE
 )
 
 # Write sensitivities -----------------------------------------------------
@@ -446,19 +445,54 @@ make_detailed_sensitivites <- function(biglist, mods,
 
 ## grouped plots -----------------------------------------------------------
 
+modeling <- data.frame(dir = c('breakpoint_m', 
+                               'no_sex_selex',
+                               'sex_selex',
+                               'single_m',
+                               'tv_wl',
+                               'hybrid_f',
+                               'nonlinear_q'),
+                       pretty = c('Breakpoint M',
+                                  'No sex selectivity',
+                                  'Sex selectivity all fleets',
+                                  'Single M',
+                                  'Time-vary weight-length',
+                                  'Hybrid F method',
+                                  'Nonlinear WCGBTS Q')
+)
 
-indices <- data.frame(dir = c(
+indices <- data.frame(dir = c('no_indices',
                               'no_smurf',
+                              'observer_index',
                               'oceanographic_index',
-                              'RREAS'),
-                      pretty = c(
+                              'ORBS',
+                              'ORBS_SE',
+                              'RREAS',
+                              'upweight_wcgbts'),
+                      pretty = c('No indices',
                                  '- SMURF index',
+                                 '+ WCGOP index',
                                  '+ Oceanographic index',
-                                 '+ RREAS index')
+                                 '+ ORBS index',
+                                 '+ ORBS w/added SE',
+                                 '+ RREAS index',
+                                 'Decrease WCGBTS CV')
 )
 
 
-sens_names <- bind_rows(indices)
+comp_data <- data.frame(dir = c('M_I_weighting',
+                                'no_fishery_len',
+                                'unsexed_lengths',
+                                'raw_pacfin_comps'),
+                        pretty = c('McAllister & Ianelli',
+                                   '- Fishery lengths',
+                                   '+ Unsexed commercial lengths',
+                                   'Raw commercial comps')
+)
+
+sens_names <- bind_rows(modeling,
+                        indices,
+                        comp_data)
 
 big_sensitivity_output <- SSgetoutput(
   dirvec = file.path(
@@ -468,17 +502,18 @@ big_sensitivity_output <- SSgetoutput(
       glue::glue("sensitivities/{subdir}", subdir = sens_names$dir)
     )
   ),
- # SpawnOutputLabel = "Spawning output (trillions of eggs)"
+  SpawnOutputLabel = "Spawning output (trillions of eggs)"
 ) |>
   `names<-`(c('base', sens_names$dir))
 
-saveRDS(object = big_sensitivity_output, file = "index_sensitivities_forplots.rds")
+
 
 # test to make sure they all read correctly:
 which(sapply(big_sensitivity_output, length) < 180) # all lengths should be >180
 
-sens_names_ls <- list(
-                      indices = indices)
+sens_names_ls <- list(modeling = modeling,
+                      indices = indices,
+                      comp_data = comp_data)
 
 outdir <- 'report/figures/sensitivities'
 
