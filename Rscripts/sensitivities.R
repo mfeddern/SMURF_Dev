@@ -2,34 +2,33 @@ library(here)
 library(r4ss)
 library(dplyr)
 library(ggplot2)
+library(scales)
+library(tidyr)
+library(NatParksPalettes)
+library(ggpubr)
+# option 1: install via {pak}
+#install.packages("pak")
+#pak::pkg_install("r4ss/r4ss")
+
+colpal<-natparks.pals("DeathValley",n=6)
+colpalLONG<-natparks.pals("DeathValley",n=12)
 model_directory <- 'model_runs'
-base_model_name <- '5.09_no_extra_se'
+base_model_name <- '5.09_no_extra_se' #base model is the assessment base model == contains SMURF!
 exe_loc <- here('model_runs/ss3.exe')
-base_model <- SS_read(file.path(model_directory, base_model_name), ss_new = TRUE)
+base_model <- SS_read(file.path(model_directory, base_model_name))
 base_out <- SS_output(
   file.path(model_directory, base_model_name),
-  SpawnOutputLabel = "Spawning output (trillions of eggs)",
+  # SpawnOutputLabel = "Spawning output (trillions of eggs)",
   printstats = FALSE,
-  verbose = FALSE
+  verbose = FALSE,
+  covar =FALSE
 )
+
 
 # Write sensitivities -----------------------------------------------------
 
-## M-I weighting -----------------------------------------------------------
 
-copy_SS_inputs(dir.old = file.path(model_directory, base_model_name), 
-               dir.new = file.path(model_directory, 'sensitivities', 'M_I_weighting'))
-file.copy(from = file.path(model_directory, base_model_name,
-                           c('Report.sso', 'CompReport.sso', 'warning.sso')), 
-          to = file.path(model_directory, 'sensitivities', 'M_I_weighting', 
-                         c('Report.sso', 'CompReport.sso', 'warning.sso')), 
-          overwrite = TRUE)
-tune_comps(option = 'MI', niters_tuning = 3, 
-           dir = file.path(model_directory, 'sensitivities', 'M_I_weighting'),
-           exe = exe_loc, extras = '-nohess')
-
-
-## SMURFS ------------------------------------------------------------------
+## No SMURF ------------------------------------------------------------------
 
 sensi_mod <- base_model
 
@@ -41,53 +40,17 @@ sensi_mod$ctl$Q_parms <- sensi_mod$ctl$Q_parms[-grep('SMURF', rownames(sensi_mod
 
 SS_write(sensi_mod, file.path(model_directory, 'sensitivities', 'no_SMURF'), overwrite = TRUE)
 
-# out <- SSgetoutput(dirvec = c(file.path(model_directory, base_model_name),
-#                               file.path(model_directory, 'sensitivities', 'SMURF')))
-# SSsummarize(out) |>
-#   SSplotComparisons(subplots = c(1,3), endyrvec = 2037, new = FALSE)
+no_SMURF <- SSgetoutput(dirvec = c(file.path(model_directory, base_model_name),
+                              file.path(model_directory, 'sensitivities', 'oceanographic_index')))
 
+## Setting base model to no SMURF 
+no_smurf<- SS_read(file.path(model_directory, 'sensitivities', 'no_SMURF'))
 
-## ORBS --------------------------------------------------------------------
+ 
+## Oceanographic index2 -----------------------------------------------------
+sensi_mod <-no_smurf
 
-sensi_mod <- base_model
-
-orbs <- read.csv('Data/raw_not_confidential/ORBS index/index_forSS.csv') |>
-  mutate(index = 3) |>
-  rename(se_log = logse) |>
-  select(-fleet)
-
-sensi_mod$dat$CPUEinfo['Recreational','units'] <- 0 # numbers
-
-sensi_mod$dat$CPUE <- bind_rows(sensi_mod$dat$CPUE,
-                                orbs)
-
-sensi_mod$ctl$Q_options <- rbind(sensi_mod$ctl$Q_options,
-                                 Recreational = c(3,1,0,1,0,0)) |>
-  slice(5,1,2,3,4) # reorder
-sensi_mod$ctl$Q_parms <- bind_rows(sensi_mod$ctl$Q_parms[1:2,], # copy H&L Q setup for SMURF
-                                   sensi_mod$ctl$Q_parms)
-rownames(sensi_mod$ctl$Q_parms) <- rownames(sensi_mod$ctl$Q_parms) |>
-  stringr::str_replace('H&L_survey\\(4\\)\\.\\.\\.[1|2]', 'Recreational(3)') |> # fix row names
-  stringr::str_remove('\\.\\.\\.[:digit:]')
-
-SS_write(sensi_mod, file.path(model_directory, 'sensitivities', 'ORBS'), overwrite = TRUE)
-
-sensi_mod$ctl$Q_parms['Q_extraSD_Recreational(3)', 'PHASE'] <- 3
-SS_write(sensi_mod, file.path(model_directory, 'sensitivities', 'ORBS_SE'), overwrite = TRUE)
-
-# 
-# out <- SSgetoutput(dirvec = c(file.path(model_directory, base_model_name),
-#                               file.path(model_directory, 'sensitivities', 'ORBS')))
-# SSsummarize(out) |>
-#   SSplotComparisons(subplots = c(1,3), endyrvec = 2037, new = FALSE)
-# SSplotIndices(out[[2]])
-# 
-
-## Oceanographic index -----------------------------------------------------
-
-sensi_mod <- base_model
-
-flt <- base_model$dat$Nfleets + 1
+flt <- sensi_mod$dat$Nfleets + 1
 
 ocean <- read.csv('Data/raw_not_confidential/OceanographicIndex/OceanographicIndexV1.csv') |>
   mutate(month = 7, 
@@ -102,63 +65,26 @@ sensi_mod$dat$fleetinfo[flt,] <- c(3,1,1,2,0,'ocean')
 sensi_mod$dat$CPUEinfo[flt,] <- c(flt,36,-1,0)
 sensi_mod$dat$len_info[flt,] <- sensi_mod$dat$len_info[flt-1,]
 sensi_mod$dat$age_info[flt,] <- sensi_mod$dat$age_info[flt-1,]
-sensi_mod$dat$fleetinfo1$SMURF <- sensi_mod$dat$fleetinfo1$WCGBTS
-sensi_mod$dat$fleetinfo2$SMURF <- sensi_mod$dat$fleetinfo2$WCGBTS
+sensi_mod$dat$fleetinfo1$ocean <- sensi_mod$dat$fleetinfo1$WCGBTS
+sensi_mod$dat$fleetinfo2$ocean <- sensi_mod$dat$fleetinfo2$WCGBTS
 sensi_mod$dat$CPUE <- bind_rows(sensi_mod$dat$CPUE,
-                          ocean)
+                                ocean)
 
 # control file updates
 sensi_mod$ctl$size_selex_types[flt,] <- rep(0, 4)
 sensi_mod$ctl$age_selex_types[flt,] <- sensi_mod$ctl$age_selex_types[flt-1,]
 sensi_mod$ctl$Q_options <- rbind(sensi_mod$ctl$Q_options,
-                           ocean = c(flt,1,0,0,0,0))
+                                 ocean = c(flt,1,0,0,0,0))
 sensi_mod$ctl$Q_parms <- bind_rows(sensi_mod$ctl$Q_parms,
-                             sensi_mod$ctl$Q_parms[1,])
+                                   sensi_mod$ctl$Q_parms[1,])
 
 sensi_mod$ctl$Q_parms[nrow(sensi_mod$ctl$Q_parms), c('INIT', 'PHASE')] <- c(1, -99)
 
 SS_write(sensi_mod, file.path(model_directory, 'sensitivities', 'oceanographic_index'), overwrite = TRUE)
-# 
-# out <- SSgetoutput(dirvec = c(file.path(model_directory, base_model_name),
-#                               file.path(model_directory, 'sensitivities', 'oceanographic_index')))
 
-# miraculously, it is not bad.
-# 
-# out <- SS_output(file.path(model_directory, 'sensitivities', 'hook_and_line'))
-# SS_plots(out)
+## RREAS Coastwide-------------------------------------------------------------------
 
-# surveys_only <- SS_read(file.path(model_directory, 'sensitivities', 'hook_and_line'), 
-#                         ss_new = TRUE)
-# 
-# surveys_only$ctl$MG_parms$PHASE <- -99
-# surveys_only$ctl$SR_parms$PHASE <- -99
-# surveys_only$ctl$Q_parms$PHASE <- -99
-# surveys_only$ctl$size_selex_parms$PHASE <- -99
-# surveys_only$ctl$size_selex_parms_tv$PHASE <- -99
-# surveys_only$ctl$lambdas <- surveys_only$ctl$lambdas |>
-#   slice(-(1:2)) |>
-#   bind_rows(
-#     data.frame(
-#       like_comp = rep(4, 6),
-#       fleet = 1:6, phase = 1, value = 0, sizefreq_method = 0
-#     ),
-#     data.frame(
-#       like_comp = rep(5, 5),
-#       fleet = c(1,2,3,5,6), phase = 1, value = 0, sizefreq_method = 0
-#     )
-#     
-#   )
-# surveys_only$ctl$N_lambdas <- nrow(surveys_only$ctl$lambdas)
-# surveys_only$ctl$recdev_phase <- 1
-# 
-# SS_write(surveys_only, file.path(model_directory, 'sensitivities', 'surveys_only'),
-#          overwrite = TRUE)
-# out_surveys <- SS_output(file.path(model_directory, 'sensitivities', 'surveys_only'))
-# SS_plots(out_surveys)
-
-## RREAS -------------------------------------------------------------------
-
-sensi_mod <- base_model
+sensi_mod <- no_smurf
 
 flt <- base_model$dat$Nfleets + 1
 
@@ -188,213 +114,95 @@ sensi_mod$ctl$Q_parms <- bind_rows(sensi_mod$ctl$Q_parms,
 SS_write(sensi_mod, file.path(model_directory, 'sensitivities', 'RREAS'),
          overwrite = TRUE)
 
-## remove indices ----------------------------------------------------
+## RREAS North-------------------------------------------------------------------
 
-sensi_mod <- base_model
+sensi_mod <- no_smurf
 
-sensi_mod$dat$CPUE$year <- -1*sensi_mod$dat$CPUE$year
-sensi_mod$ctl$Q_options <- sensi_mod$ctl$Q_parms <- NULL
+flt <- base_model$dat$Nfleets + 1
 
-SS_write(sensi_mod, file.path(model_directory, 'sensitivities', 'no_indices'),
-         overwrite = TRUE)
+rreasn <- read.csv('Data/raw_not_confidential/RREAS/YOYNorth.csv') |>
+  mutate(index = flt, month = 7) |>
+  rename(se_log = logse, year = YEAR, obs = est)
 
-
-## upweight wcbts ----------------------------------------------------------
-
-sensi_mod <- base_model
-
-sensi_mod$dat$CPUE <- sensi_mod$dat$CPUE |>
-  mutate(se_log = ifelse(index == 6, 0.05, se_log))
-
-SS_write(sensi_mod, file.path(model_directory, 'sensitivities', 'upweight_wcgbts'),
-         overwrite = TRUE)
-
-## observer index ----------------------------------------------------------
-
-sensi_mod <- base_model
-
-sensi_mod$dat$CPUEinfo
+sensi_mod$dat$Nfleets <- flt
+sensi_mod$dat$fleetnames[flt] <- 'RREASN'
+sensi_mod$dat$fleetinfo[flt,] <- c(3,1,1,2,0,'RREASN')
+sensi_mod$dat$CPUEinfo[flt,] <- c(flt,33,0,0)
+sensi_mod$dat$len_info[flt,] <- sensi_mod$dat$len_info[flt-1,]
+sensi_mod$dat$age_info[flt,] <- sensi_mod$dat$age_info[flt-1,]
+sensi_mod$dat$fleetinfo1$RREASN <- sensi_mod$dat$fleetinfo1$WCGBTS
+sensi_mod$dat$fleetinfo2$RREASN <- sensi_mod$dat$fleetinfo2$WCGBTS
 sensi_mod$dat$CPUE <- bind_rows(sensi_mod$dat$CPUE,
-                                read.csv('data/processed/observer_index.csv'))
+                                rreasn)
 
+# control file updates
+sensi_mod$ctl$size_selex_types[flt,] <- rep(0, 4)
+sensi_mod$ctl$age_selex_types[flt,] <- sensi_mod$ctl$age_selex_types[flt-1,]
 sensi_mod$ctl$Q_options <- rbind(sensi_mod$ctl$Q_options,
-                                 Commercial = c(1,1,0,0,0,1)) |> # float Q, was not being well estimated (possibly bad start value)
-  slice(5,1,2,3,4) # reorder
-sensi_mod$ctl$Q_parms <- bind_rows(sensi_mod$ctl$Q_parms[1,], # copy H&L Q setup for observer index
-                                   sensi_mod$ctl$Q_parms)
-sensi_mod$ctl$Q_parms[1, 'PHASE'] <- -99
+                                 RREASN = c(flt,1,0,0,0,0))
+sensi_mod$ctl$Q_parms <- bind_rows(sensi_mod$ctl$Q_parms,
+                                   sensi_mod$ctl$Q_parms[1,])
 
-SS_write(sensi_mod, file.path(model_directory, 'sensitivities', 'observer_index'),
-         overwrite = TRUE)
-# out <- SS_output(file.path(model_directory, 'sensitivities', 'observer_index'))
-# SSplotIndices(out, fleets = 1)
-
-## no fishery lengths ------------------------------------------------------
-
-sensi_mod <- base_model
-sensi_mod$ctl$lambdas <- sensi_mod$ctl$lambdas |>
-  bind_rows(data.frame(
-    like_comp = 4, fleet = 1:3, phase = 1, value = 0, sizefreq_method = 0
-  ))
-sensi_mod$ctl$N_lambdas <- nrow(sensi_mod$ctl$lambdas)
-
-SS_write(sensi_mod, file.path(model_directory, 'sensitivities', 'no_fishery_len'),
+SS_write(sensi_mod, file.path(model_directory, 'sensitivities', 'RREASN'),
          overwrite = TRUE)
 
-## non-linear WCGBTS catchability -------------------------------------------------
+## OCNMS-------------------------------------------------------------------
 
-sensi_mod <- base_model
-sensi_mod$ctl$Q_options['WCGBTS', 'link'] <- 3
-# Triennial estimate of power parameters is pretty close to zero
+sensi_mod <- no_smurf
 
-power_row <- sensi_mod$ctl$Q_parms[1,] |>
-  `rownames<-`('power_parameter')
-power_row$INIT <- 0
-power_row$PHASE <- 3
+flt <- base_model$dat$Nfleets + 1
 
-sensi_mod$ctl$Q_parms <- bind_rows(
-  sensi_mod$ctl$Q_parms[1:5,],
-  power_row,
-  sensi_mod$ctl$Q_parms[6:8,]
-)
+OCNMS <- read.csv('Data/raw_not_confidential/Estimated-YOY-trend-coast.csv')|>
+  rename(Index=grand.mean)|>
+  select(year, Index, SE)|>
+  mutate(index = flt, month = 7) |>
+  rename(se_log = SE,  obs = Index)
+  
+sensi_mod$dat$Nfleets <- flt
+sensi_mod$dat$fleetnames[flt] <- 'OCNMS'
+sensi_mod$dat$fleetinfo[flt,] <- c(3,1,1,2,0,'OCNMS')
+sensi_mod$dat$CPUEinfo[flt,] <- c(flt,33,0,0)
+sensi_mod$dat$len_info[flt,] <- sensi_mod$dat$len_info[flt-1,]
+sensi_mod$dat$age_info[flt,] <- sensi_mod$dat$age_info[flt-1,]
+sensi_mod$dat$fleetinfo1$SMURF <- sensi_mod$dat$fleetinfo1$WCGBTS
+sensi_mod$dat$fleetinfo2$SMURF <- sensi_mod$dat$fleetinfo2$WCGBTS
+sensi_mod$dat$CPUE <- bind_rows(sensi_mod$dat$CPUE,
+                                OCNMS)
 
-SS_write(sensi_mod, file.path(model_directory, 'sensitivities', 'nonlinear_q'),
+# control file updates
+sensi_mod$ctl$size_selex_types[flt,] <- rep(0, 4)
+sensi_mod$ctl$age_selex_types[flt,] <- sensi_mod$ctl$age_selex_types[flt-1,]
+sensi_mod$ctl$Q_options <- rbind(sensi_mod$ctl$Q_options,
+                                 OCNMS = c(flt,1,0,0,0,0))
+sensi_mod$ctl$Q_parms <- bind_rows(sensi_mod$ctl$Q_parms,
+                                   sensi_mod$ctl$Q_parms[1,])
+
+SS_write(sensi_mod, file.path(model_directory, 'sensitivities', 'OCNMS'),
          overwrite = TRUE)
-
-
-## Add unsexed commercial lengths ------------------------------------------
-
-sensi_mod <- base_model
-
-unsexed_lengths <- read.csv('data/processed/pacfin_lcomps.csv') |>
-  `names<-`(names(sensi_mod$dat$lencomp)) |>
-  filter(sex == 0)
-sensi_mod$dat$lencomp <- bind_rows(sensi_mod$dat$lencomp,
-                                   unsexed_lengths)
-
-SS_write(sensi_mod, file.path(model_directory, 'sensitivities', 'unsexed_lengths'),
-         overwrite = TRUE)
-
-
-## sex-specific selectivity ------------------------------------------------
-
-sensi_mod <- base_model
-
-sensi_mod$ctl$size_selex_parms[grepl('Off_(1|2|5)', rownames(sensi_mod$ctl$size_selex_parms)) &
-                                 !grepl('Rec|H&L', rownames(sensi_mod$ctl$size_selex_parms)), 
-                               'PHASE'] <- 6
-
-SS_write(sensi_mod, file.path(model_directory, 'sensitivities', 'sex_selex'), 
-         overwrite = TRUE)
-
-
-## No sex specific selectivity ---------------------------------------------
-
-sensi_mod <- base_model
-
-sensi_mod$ctl$size_selex_parms[grepl('Off', rownames(sensi_mod$ctl$size_selex_parms)), 'PHASE'] <- -99
-
-SS_write(sensi_mod, file.path(model_directory, 'sensitivities', 'no_sex_selex'), 
-         overwrite = TRUE)
-
-8
-## Breakpoint M --------------------------------------------------------------
-
-sensi_mod <- base_model
-
-sensi_mod$ctl$natM_type <- 1
-sensi_mod$ctl$N_natM <- sensi_mod$ctl$N_natMparms <- 2
-sensi_mod$ctl$M_ageBreakPoints <- 9:10 # age at 50% maturity is 10
-
-nat_m_ind <- grep('NatM', rownames(sensi_mod$ctl$MG_parms))
-
-mg_table <- SS_read(file.path(model_directory, '4.07_breakpoint_m'))$ctl$MG_parms
-mg_table['CV_old_Fem_GP_1', 'LO'] <- -0.99
-sensi_mod$ctl$MG_parms <- mg_table
-
-SS_write(sensi_mod, file.path(model_directory, 'sensitivities', 'breakpoint_m'),
-         overwrite = TRUE)  
-
-## Lorenzen M --------------------------------------------------------------
-
-sensi_mod <- base_model
-
-sensi_mod$ctl$natM_type <- 2 # lorenzen M
-sensi_mod$ctl$Lorenzen_refage <- 10 # age to which the M parameter & prior applies
-
-SS_write(sensi_mod, file.path(model_directory, 'sensitivities', 'lorenzen_m'),
-         overwrite = TRUE)  
-
-
-## Single M ----------------------------------------------------------------
-
-sensi_mod <- base_model
-
-sensi_mod$ctl$MG_parms['NatM_p_1_Mal_GP_1', c('INIT', 'PHASE')] <- c(0, -99)
-
-SS_write(sensi_mod, file.path(model_directory, 'sensitivities', 'single_m'),
-         overwrite = TRUE)  
-
-
-## Time varying W-L --------------------------------------------------------
-
-source('Rscripts/add_time_varying_WL.R')
-
-sensi_mod <- add_tv_wl(base_model)
-
-SS_write(sensi_mod, file.path(model_directory, 'sensitivities', 'tv_wl'))
-
-## F method --base_model# F method ----------------------------------------------------------------
-
-sensi_mod <- base_model
-
-sensi_mod$ctl$F_Method <- 3
-sensi_mod$ctl$F_iter <- 4
-
-SS_write(sensi_mod, file.path(model_directory, 'sensitivities', 'hybrid_f'))
-
-
-## Raw pacfin comps --------------------------------------------------------
-
-sensi_mod <- base_model
-
-pacfin_raw_len <- read.csv('data/processed/pacfin_lcomps_raw.csv')
-pacfin_raw_age <- read.csv('data/processed/pacfin_acomps_raw.csv')
-
-sensi_mod$dat$agecomp[sensi_mod$dat$agecomp$fleet == 1, 
-                      stringr::str_detect(colnames(sensi_mod$dat$agecomp), '[:digit:]')] <- pacfin_raw_age |>
-  select(f1:m30)
-
-sensi_mod$dat$lencomp[sensi_mod$dat$lencomp$fleet == 1, 
-                      stringr::str_detect(colnames(sensi_mod$dat$lencomp), '[:digit:]')] <- pacfin_raw_len |>
-  filter(sex == 3) |>
-  select(f20:m56)
-
-SS_write(sensi_mod, file.path(model_directory, 'sensitivities', 'raw_pacfin_comps'))
-
 # Run stuff ---------------------------------------------------------------
 
 sensi_dirs <- list.files(file.path(model_directory, 'sensitivities'))
 
-tuning_mods <- grep('weighting', sensi_mods)
+tuning_mods <- grep('weighting', sensi_mod)
 
 future::plan(future::multisession(workers = parallelly::availableCores(omit = 1)))
 
-# furrr::future_map(sensi_dirs[-tuning_mods], \(x) 
-#                   run(file.path(model_directory, 'sensitivities', x), 
-#                       exe = exe_loc, extras = '-nohess', skipfinished = FALSE)
-# )
 
-furrr::future_map(c('nonlinear_q', 'oceanographic_index'), \(x) 
+furrr::future_map(c("OCNMS"), \(x) 
                   run(file.path(model_directory, 'sensitivities', x), 
                       exe = exe_loc, extras = '-nohess', skipfinished = FALSE)
 )
 
 future::plan(future::sequential)
-
-
 # Plot stuff --------------------------------------------------------------
-
+out <- SSgetoutput(dirvec = c(file.path(model_directory, base_model_name),
+                              file.path(model_directory, 'sensitivities', 'no_SMURF'),
+                              file.path(model_directory, 'sensitivities', 'OCNMS'),
+                              file.path(model_directory, 'sensitivities', 'RREAS'),
+                              file.path(model_directory, 'sensitivities', 'RREASN'),
+                              file.path(model_directory, 'sensitivities', 'oceanographic_index')))
+SSsummarize(out) |>
+  SSplotComparisons(subplots = c(1,3), endyrvec = 2037, new = FALSE)
 
 ## function ----------------------------------------------------------------
 
@@ -445,54 +253,21 @@ make_detailed_sensitivites <- function(biglist, mods,
 
 ## grouped plots -----------------------------------------------------------
 
-modeling <- data.frame(dir = c('breakpoint_m', 
-                               'no_sex_selex',
-                               'sex_selex',
-                               'single_m',
-                               'tv_wl',
-                               'hybrid_f',
-                               'nonlinear_q'),
-                       pretty = c('Breakpoint M',
-                                  'No sex selectivity',
-                                  'Sex selectivity all fleets',
-                                  'Single M',
-                                  'Time-vary weight-length',
-                                  'Hybrid F method',
-                                  'Nonlinear WCGBTS Q')
-)
 
-indices <- data.frame(dir = c('no_indices',
-                              'no_smurf',
-                              'observer_index',
+indices <- data.frame(dir = c('no_smurf',
+                              'OCNMS',
+                              "RREASN",
                               'oceanographic_index',
-                              'ORBS',
-                              'ORBS_SE',
-                              'RREAS',
-                              'upweight_wcgbts'),
-                      pretty = c('No indices',
-                                 '- SMURF index',
-                                 '+ WCGOP index',
-                                 '+ Oceanographic index',
-                                 '+ ORBS index',
-                                 '+ ORBS w/added SE',
-                                 '+ RREAS index',
-                                 'Decrease WCGBTS CV')
+                              'RREAS'),
+                      pretty = c('- No Indices',
+                                 '+ OCNMS',
+                                 '+ RREAS North',
+                                 '+ Oceanographic',
+                                 '+ RREAS Coastwide')
 )
 
 
-comp_data <- data.frame(dir = c('M_I_weighting',
-                                'no_fishery_len',
-                                'unsexed_lengths',
-                                'raw_pacfin_comps'),
-                        pretty = c('McAllister & Ianelli',
-                                   '- Fishery lengths',
-                                   '+ Unsexed commercial lengths',
-                                   'Raw commercial comps')
-)
-
-sens_names <- bind_rows(modeling,
-                        indices,
-                        comp_data)
+sens_names <- bind_rows(indices)
 
 big_sensitivity_output <- SSgetoutput(
   dirvec = file.path(
@@ -502,20 +277,19 @@ big_sensitivity_output <- SSgetoutput(
       glue::glue("sensitivities/{subdir}", subdir = sens_names$dir)
     )
   ),
-  SpawnOutputLabel = "Spawning output (trillions of eggs)"
+ # SpawnOutputLabel = "Spawning output (trillions of eggs)"
 ) |>
   `names<-`(c('base', sens_names$dir))
 
-
+saveRDS(object = big_sensitivity_output, file = "data/processed/index_sensitivities_forplots.rds")
 
 # test to make sure they all read correctly:
 which(sapply(big_sensitivity_output, length) < 180) # all lengths should be >180
 
-sens_names_ls <- list(modeling = modeling,
-                      indices = indices,
-                      comp_data = comp_data)
+sens_names_ls <- list(
+                      indices = indices)
 
-outdir <- 'report/figures/sensitivities'
+outdir <- 'figures/sensitivities'
 
 purrr::imap(sens_names_ls, \(sens_df, grp_name) 
             make_detailed_sensitivites(biglist = big_sensitivity_output, 
@@ -524,13 +298,110 @@ purrr::imap(sens_names_ls, \(sens_df, grp_name)
                                        grp_name = grp_name))
 
 
+## spawning output -------------------------------------------------------------
 
+sensitivity_output <- SSsummarize(big_sensitivity_output) 
+
+SpawningBiomass <- sensitivity_output$SpawnBio
+colnames(SpawningBiomass)<- c( "NoIndices","SMURF", "OCNMS", "RREASN", "Oceanographic", "RREAS", "Label", "Year")
+SpawningData<-SpawningBiomass%>%pivot_longer(c( NoIndices,SMURF, OCNMS, RREASN, Oceanographic, RREAS))%>%
+  rename(SpawnBio=value)%>%
+  mutate(Index=ifelse(name=="NoIndices", "No Indices", 
+                      ifelse(name=="SMURF", "SMURF",
+                             ifelse(name=="OCNMS", "OCNMS",
+                                    ifelse(name=="RREASN","RREAS North",
+                                           ifelse(name=="Oceanographic", "Oceanographic","RREAS Coastwide"))))))
+  
+
+spawnlong<-ggplot(SpawningData) +
+  geom_rect(xmin=2025, xmax=2050,ymin=2.25, ymax=16, alpha=0.1,fill='#F0F0F0',col='#F0F0F0')+
+  geom_point(aes(x = Year, y = SpawnBio, col = Index, pch = Index))+
+  geom_line(aes(x = Year, y = SpawnBio, col = Index, pch = Index))+
+  ylab("Spawning Output")+
+  ylim(c(3, 15))+
+  xlim(c(1900, 2036))+
+  scale_color_manual(values=colpal)+
+  geom_text(x = 2032, y=14, label="Forecast \n Period")+
+  scale_x_continuous(limits = c(1900, 2036), oob = oob_keep)+
+  theme_bw()
+
+spawnshort<-ggplot(SpawningData%>%filter(Year>=2000)) +
+  geom_rect(xmin=2025, xmax=2050,ymin=2.25, ymax=16, alpha=0.1,fill='#F0F0F0',col='#F0F0F0')+
+  geom_point(aes(x = Year, y = SpawnBio, col = Index, pch = Index))+
+  geom_line(aes(x = Year, y = SpawnBio, col = Index))+
+  ylab("Spawning Output")+
+  ylim(c(3, 15))+
+  scale_color_manual(values=colpal)+
+  scale_x_continuous(limits = c(1900, 2036), oob = oob_keep)+
+  geom_text(x = 2032, y=14, label="Forecast \n Period")+
+  xlim(c(2000, 2036))+
+  theme_bw()
+
+## fraction unfished -------------------------------------------------------------
+
+unfished <- sensitivity_output$Bratio
+colnames(unfished)<- c("SMURF", "NoIndices", "OCNMS", "RREASN", "Oceanographic", "RREAS", "Label", "Year")
+FractionData<-unfished%>%pivot_longer(c(SMURF, NoIndices, OCNMS, RREASN, Oceanographic, RREAS))%>%
+  rename(Bratio=value)%>%
+  mutate(Index=ifelse(name=="SMURF", "SMURF", 
+                      ifelse(name=="NoIndices", "No Indices",
+                             ifelse(name=="OCNMS", "OCNMS",
+                                    ifelse(name=="RREASN","RREAS North",
+                                           ifelse(name=="Oceanographic", "Oceanographic","RREAS Coastwide"))))))
+
+
+fractionshort<-ggplot(FractionData) +
+  geom_rect(xmin=2025, xmax=2045,ymin=-2.25, ymax=16, alpha=0.1,fill='#F0F0F0',col='#F0F0F0')+
+  geom_point(aes(x = Year, y = Bratio, col = Index, pch = Index))+
+  geom_line(aes(x = Year, y = Bratio, col = Index, pch = Index))+
+  ylab("Fraction Unfished")+
+  ylim(c(0, 1.05))+
+  geom_text(x = 2032, y=1, label="Forecast \n Period")+
+  scale_color_manual(values=colpal)+
+  geom_hline(yintercept=0.40, lty=2, col =colpalLONG[1])+
+  geom_hline(yintercept=0.25, lty=2, col =colpalLONG[1])+
+  geom_text(x = 2006, y=0.45, label="Management target")+
+  geom_text(x = 2006, y=0.3, label="Minimum stock size threshold")+
+  geom_hline(yintercept=1, lty=2)+
+  scale_x_continuous(limits = c(2000, 2036), oob = oob_keep)+
+  geom_text(x = 2032, y=14, label="Forecast Period")+
+  theme_bw()
+
+fractionlong<-ggplot(FractionData) +
+  geom_rect(xmin=2025, xmax=2045,ymin=-2.25, ymax=16, alpha=0.1,fill='#F0F0F0',col='#F0F0F0')+
+  geom_point(aes(x = Year, y = Bratio, col = Index, pch = Index))+
+  geom_line(aes(x = Year, y = Bratio, col = Index, pch = Index))+
+  ylab("Fraction Unfished")+
+  ylim(c(0, 1.05))+
+  geom_text(x = 2032, y=1, label="Forecast \n Period")+
+  scale_color_manual(values=colpal)+
+  geom_hline(yintercept=0.40, lty=2, col =colpalLONG[1])+
+  geom_hline(yintercept=0.25, lty=2, col =colpalLONG[1])+
+  geom_text(x = 1910, y=0.45, label="Management target")+
+  geom_text(x = 1915, y=0.3, label="Minimum stock size threshold")+
+  geom_hline(yintercept=1, lty=2)+
+  scale_x_continuous(limits = c(1900, 2036), oob = oob_keep)+
+  geom_text(x = 2032, y=14, label="Forecast Period")+
+  theme_bw()
+
+## full plot ----------------------------------------------------------------
+
+#all_ts<- ggarrange(ps_ts, sb_ts,yt_ts, hk_ts,ncol = 1, nrow = 4)
+#all_ts
+pdf(file = "Figures/Manuscript/MainText/pdf/spawnplot.pdf", width =8, height =6)
+spawnshort
+dev.off()
+
+ggsave("Figures/SMURF_Manuscript/png/spawnplot.png",  dpi = 300,  
+       width = 7, height = 5, units = "in")
+spawnshort
+dev.off() 
 ## big plot ----------------------------------------------------------------
 
 current.year <- 2025
 CI <- 0.95
 
-sensitivity_output <- SSsummarize(big_sensitivity_output) 
+
 
 lapply(big_sensitivity_output, function(.)
   .$warnings[grep('gradient', .$warnings)]) # check gradients
@@ -595,3 +466,78 @@ ggplot(dev.quants, aes(x = relErr, y = mod_num, col = Metric, pch = Metric)) +
   viridis::scale_color_viridis(discrete = TRUE, labels = metric.labs)
 ggsave(file.path(outdir, 'sens_summary.png'),  dpi = 300,  
        width = 6, height = 6.5, units = "in")
+
+
+## comparison plot ----------------------------------------------------------------
+
+SMURF <- read.csv('Data/raw_not_confidential/SMURF index/index_forSS.csv') |>
+  select(year, month, obs, se_log = logse)|>
+  mutate(index=7)
+no_index<- read.csv('Data/raw_not_confidential/SMURF index/ghost.csv')|>
+  mutate(index=7)
+
+dat_long<-bind_rows(OCNMS%>%mutate(Index="OCNMS"),rreasn%>%mutate(Index="RREAS North"))%>%
+  bind_rows(ocean%>%mutate(Index="Oceanographic"))%>%
+  bind_rows(SMURF%>%mutate(Index="SMURF"))%>%
+  bind_rows(rreas%>%mutate(Index="RREAS Coastwide"))%>%
+  bind_rows(no_index%>%mutate(Index="No Index"))
+
+dat_stand<-dat_long%>%group_by(Index)%>%mutate(Stand=scale(obs))%>%ungroup()
+dat_stand2<-dat_long%>%filter(year>2015)%>%group_by(Index)%>%mutate(Stand=scale(obs))%>%ungroup()%>%
+  bind_rows(no_index%>%mutate(Index="No Index"))
+
+stand<-ggplot(dat_stand%>%filter(index>0)) +
+  geom_point(aes(x = year, y = Stand, col = Index, pch = Index))+
+  geom_line(aes(x = year, y = Stand, col = Index, pch = Index))+
+  ylab("Standardized Index")+
+ xlim(c(2000, 2025))+
+  xlab("")+
+ # geom_text(x = 2032, y=1, label="Forecast \n Period")+
+  scale_color_manual(values=colpal)+
+#  geom_hline(yintercept=0.40, lty=2, col =colpalLONG[1])+
+ # geom_hline(yintercept=0.25, lty=2, col =colpalLONG[1])+
+ # geom_text(x = 1910, y=0.45, label="Management target")+
+#  geom_text(x = 1915, y=0.3, label="Minimum stock size threshold")+
+#  geom_hline(yintercept=1, lty=2)+
+#  scale_x_continuous(limits = c(1900, 2036), oob = oob_keep)+
+ # geom_text(x = 2032, y=14, label="Forecast Period")+
+  theme_bw()+
+  theme(legend.position = "none")
+
+stand2016<-ggplot(dat_stand2%>%filter(index>0)) +
+  geom_point(aes(x = year, y = Stand, col = Index, pch = Index))+
+  geom_line(aes(x = year, y = Stand, col = Index, pch = Index))+
+  ylab("")+
+  xlab("")+
+  xlim(c(2016, 2024))+
+  # ylim(c(0, 1.05))+
+  # geom_text(x = 2032, y=1, label="Forecast \n Period")+
+  scale_color_manual(values=colpal)+
+  #  geom_hline(yintercept=0.40, lty=2, col =colpalLONG[1])+
+  # geom_hline(yintercept=0.25, lty=2, col =colpalLONG[1])+
+  # geom_text(x = 1910, y=0.45, label="Management target")+
+  #  geom_text(x = 1915, y=0.3, label="Minimum stock size threshold")+
+  #  geom_hline(yintercept=1, lty=2)+
+  #  scale_x_continuous(limits = c(1900, 2036), oob = oob_keep)+
+  # geom_text(x = 2032, y=14, label="Forecast Period")+
+  theme_bw()
+
+indices<-annotate_figure(ggarrange(stand, stand2016,ncol = 2, nrow = 1, widths = c(1,1.5),labels=c("A.", "B.")),
+                bottom = "Year")
+
+pdf(file = "Figures/Manuscript/yoyindices.pdf", width =9, height =6)
+indices
+dev.off()
+
+ggsave("Figures/Manuscript/yoyindices.png",  dpi = 300,  
+       width = 9, height = 5, units = "in", bg="white")
+indices
+dev.off() 
+
+
+#### csvs ####
+likelihoods<- sensitivity_output[["likelihoods"]]
+write.csv(likelihoods, "data/processed/likelihoodsSens.csv")
+
+recdevs<-sensitivity_output[["recdevs"]]
+write.csv(recdevs, "data/processed/RecruitmentDeviationsSens.csv")
