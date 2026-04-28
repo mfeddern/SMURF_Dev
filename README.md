@@ -4,7 +4,7 @@ A repository to develop the SMURF index for northern yellowtail rockfish on the 
 
 ## Yellowtail 2025
 
-The finalized stock assessment document and associated files  are be posted to the [Pacific Fishery Management Council](https://www.pcouncil.org/) website after September of 2025. 
+The finalized stock assessment document and associated files  are posted to the [Pacific Fishery Management Council](https://www.pcouncil.org/) website after September of 2025. 
 
 ## Disclaimer
 
