@@ -1,5 +1,5 @@
 ## SMURF
-A repository to develop the SMURF index for northern yellowtail rockfish on the US West Coast and a comparison of additional pre-recruit indices considered for the 2025 stock assessment.
+A repository to develop the SMURF index for the northern stock of yellowtail rockfish on the US West Coast and a comparison of additional pre-recruit indices considered for the 2025 stock assessment.
 
 
 ## Yellowtail 2025
