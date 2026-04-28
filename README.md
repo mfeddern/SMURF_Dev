@@ -1,6 +1,10 @@
+## SMURF
+A repository to develop the SMURF index for northern yellowtail rockfish on the US West Coast and a comparison of additional pre-recruit indices considered for the 2025 stock assessment.
+
+
 ## Yellowtail 2025
 
-Code and stock assessment documentation for the 2025 stock assessment of the northern stock of Yellowtail rockfish off the U.S. West Coast. Files posted should not be considered as finalized products. The stock assessment will be reviewed by a stock assessment review (STAR) panel in the summer of 2025. The finalized stock assessment document and file  will be posted to the [Pacific Fishery Management Council](https://www.pcouncil.org/) website after September of 2025. 
+The finalized stock assessment document and associated files  are posted to the [Pacific Fishery Management Council](https://www.pcouncil.org/) website after September of 2025. 
 
 ## Disclaimer
 
