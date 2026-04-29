@@ -8,12 +8,12 @@ library(tidyr)
 library(corrplot)
 library(reshape2)
 library(corrplot)
-likelihoods  <- read.csv("likelihoodsSens.csv")%>%
+likelihoods  <- read.csv("Data/Processed/likelihoodsSens.csv")%>%
   rename(Oceanographic=oceanographic_index2,SMURF=base,'No Index'=no_smurf, 
          "RREAS North"=RREASN, "RREAS Coastwide"=RREAS)
-recdevs<- read.csv("RecruitmentDeviationsSens.csv")%>%
+recdevs<- read.csv("Data/Processed/RecruitmentDeviationsSens.csv")%>%
   select(-X)%>%
-  rename(Oceanographic=oceanographic_index2,SMURF=base, "No Index"=no_smurf, 
+  rename(Oceanographic=oceanographic_index,SMURF=base, "No Index"=no_smurf, 
          "RREAS North"=RREASN, "RREAS Coastwide"=RREAS)
 
 OCNMS<-read.csv('Data/JuvenileIndexDatasets/Estimated-YOY-trend-coast.csv')%>%
@@ -109,10 +109,9 @@ ggplot(SMURF) +
   theme_bw()
 
 colnames(dat_long)<-c("year","Index","Dataset","scaled_index")
-dat_wide<-data.frame(dat_long%>%pivot_wider(c(year),names_from = Dataset, values_from = scaled_index))
+dat_wide<-data.frame(dat_long%>%pivot_wider(id_cols=c(year),names_from = Dataset, values_from = scaled_index))
 
-colnames(dat_wide)<-c("year","OCNMS", "RREAS North", "Oceanographic", "SMURF", "RREAS Coastwide")%>%
-  left_join()
+colnames(dat_wide)<-c("year","OCNMS", "RREAS North", "Oceanographic", "SMURF", "RREAS Coastwide")
 corr<-dat_wide%>%filter(year!=2014&year!=2015&year!=2020)%>%select(-year)
 
 M = cor(corr)
