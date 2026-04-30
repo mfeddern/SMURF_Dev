@@ -1,0 +1,9 @@
+"Month","Region","Treatment","Year","Effort Offset","Df","Log-Likelihood","AICc","Delta"
+"Included","Included","Included","Included","Included",15,-1001.1,2032.8,0
+"Included","Included",NA,"Included","Included",14,-1002.2,2033.1,0.3
+NA,"Included","Included","Included","Included",13,-1018.3,2063.1,30.3
+NA,"Included",NA,"Included","Included",12,-1019.5,2063.5,30.7
+"Included",NA,"Included","Included","Included",14,-1025.3,2079.2,46.3
+"Included",NA,NA,"Included","Included",13,-1026.6,2079.6,46.8
+NA,NA,"Included","Included","Included",12,-1041.2,2106.8,74
+NA,NA,NA,"Included","Included",11,-1042.7,2107.8,75
