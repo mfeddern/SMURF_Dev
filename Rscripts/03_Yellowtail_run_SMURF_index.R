@@ -42,26 +42,26 @@ modelName <- "full"
 
 # loading helper functions 
 
-dir<-file.path("C:/Users/daubleal/OneDrive - Oregon/Desktop/2025 Assesssment Cycle/Index_SMURFS/Raw Index Scripts")
-setwd(dir)
+dir<-file.path("Rscripts/Raw Index Scripts")
+#setwd(dir)
 list.files()
 #source("helper_functions.R")
-source("diagnostics.R")
-source("do_diagnostics.R")
-source("format_hkl_data.R")
-source("format_index.R")
-source("get_index.R")
-source("match.f.R")
-source("plot_betas.R")
-source("plot_index.R")
-source("refactor.R")
+source("Rscripts/Raw Index Scripts/diagnostics.R")
+source("Rscripts/Raw Index Scripts/do_diagnostics.R")
+source("Rscripts/Raw Index Scripts/format_hkl_data.R")
+source("Rscripts/Raw Index Scripts/format_index.R")
+source("Rscripts/Raw Index Scripts/get_index.R")
+source("Rscripts/Raw Index Scripts/match.f.R")
+source("Rscripts/Raw Index Scripts/plot_betas.R")
+source("Rscripts/Raw Index Scripts/plot_index.R")
+source("Rscripts/Raw Index Scripts/refactor.R")
 
 # load data
-dir <- file.path("C:/Users/daubleal/OneDrive - Oregon/Desktop/2025 Assesssment Cycle/Index_SMURFS")
-setwd(dir)
+#dir <- file.path("C:/Users/daubleal/OneDrive - Oregon/Desktop/2025 Assesssment Cycle/Index_SMURFS")
+#setwd(dir)
 
 #load("data_for_GLM.RData")
-dat<-read.csv("combined_settlement_updatedocean_v2.csv")
+dat<-read.csv("Data/Processed/combined_settlement_updatedocean_v2.csv")
 
 # subset to species of interest  - unnecessary here
 #dat<-dat[dat$Common_Name==speciesName,]
@@ -140,11 +140,12 @@ ggplot(pos, aes(rolling8d, CPUE)) + # hmmm
 with(pos, table(year, month)) # thin on samples in August and Sept
 with(pos, table(month))
 with(dat, table(month))
-
+colnames(dat)
+dat$Sampling.Interval
 # fix or add anything 
 dat <- dat %>%
   #rename(Year = year) %>%
-  rename(Effort = Sampling.Interval) %>%
+  dplyr::rename(Effort =Sampling.Interval) %>%
   mutate(logEffort = log(Effort)) %>% 
   #create temp bins for drill
   #mutate(temp_bin = cut(temp_c, breaks=c(6,7,8,9,10,11,12)))
@@ -237,7 +238,7 @@ dataFilters <- dataFilters %>%
   rowwise() %>%
   filter(!all(is.na(across((everything()))))) %>%
   ungroup() %>%
-  rename(`Positive Samples` = Positive_Samples)
+  dplyr::rename(`Positive Samples` = Positive_Samples)
 dataFilters <- data.frame(lapply(dataFilters, as.character), stringsasFactors = FALSE)
 #write.csv(dataFilters, file = file.path(dir, "data_filters.csv"), row.names = FALSE)
 
@@ -251,9 +252,9 @@ out <- Model_selection %>%
   #                 targetSpecies = "Excluded", month = "Excluded")) %>% # fix later
   mutate_at(c(covars,"year","offset(logEffort)"), 
             funs(stringr::str_replace(.,"\\+","Included"))) %>%
-  rename(`Effort offset` = `offset(logEffort)`, 
+  dplyr::rename(`Effort offset` = `offset(logEffort)`, 
          `log-likelihood` = logLik) %>%
-  rename_with(stringr::str_to_title,-AICc)
+  dplyr::rename_with(stringr::str_to_title,-AICc)
 View(out)
 #write.csv(out, file = file.path(dir,  "model_selection.csv"), row.names = FALSE)
 
@@ -278,10 +279,10 @@ View(summaries)
 # first reload data and start from scratch
 
 # load data and add some stuff
-dir <- file.path("C:/Users/daubleal/OneDrive - Oregon/Desktop/2025 Assesssment Cycle/Index_SMURFS")
-setwd(dir)
+dir <- file.path("Rscripts")
+#setwd(dir)
 #load("data_for_GLM.RData")
-dat<-read.csv("combined_settlement_updatedocean_v2.csv")
+dat<-read.csv("Data/Processed/combined_settlement_updatedocean_v2.csv")
 
 dat$region<-ifelse(dat$Site %in% c("HH","RR"),"South","North")
 dat$treatment<-ifelse(dat$Site %in% c("HH","CF"),"Comparison","Reserve")
@@ -289,8 +290,8 @@ dat$Date<-as.POSIXct(dat$Date, format = "%Y-%m-%d")
 dat$month<-as.numeric(format(dat$Date,"%m"))
 
 # reset to a different directory 
-dir <- file.path("C:/Users/daubleal/OneDrive - Oregon/Desktop/2025 Assesssment Cycle/Index_SMURFS/yellowtail_oregon_SMURF_addrolling_16_nomonth")
-setwd(dir)
+dir <- file.path("Rscripts/Raw Index Scripts")
+#setwd(dir)
 
 summary(dat$rolling16d)
 
@@ -428,17 +429,17 @@ View(summaries)
 # more detailed notes are in the google drive doc 
 
 # reset wd
-dir <- file.path("C:/Users/daubleal/OneDrive - Oregon/Desktop/2025 Assesssment Cycle/Index_SMURFS/temp bin comparison")
-setwd(dir)
+dir <- file.path("Rscripts/Raw Index Scripts")
+#setwd(dir)
 
 # pull in all three
-full_notemp<-read.csv("index_forSS_full_notemp.csv")
-temp_index<-read.csv("index_forSS_tempindex.csv")
-temp_mid<-read.csv("index_forSS_mid.csv")
-cdd8<-read.csv("index_forSS_cdd8.csv")
-rolling<-read.csv("index_forSS_rolling.csv")
-cdd8_month<-read.csv("index_forSS_cdd8_nomonth.csv")
-rolling_month<-read.csv("index_forSS_rolling_nomonth.csv")
+full_notemp<-read.csv("Data/Processed/index_forSS_full_notemp.csv")
+temp_index<-read.csv("Data/Processed/index_forSS_tempindex.csv")
+temp_mid<-read.csv("Data/Processed/index_forSS_mid.csv")
+cdd8<-read.csv("Data/Processed/index_forSS_cdd8.csv")
+rolling<-read.csv("Data/Processed/index_forSS_rolling.csv")
+cdd8_month<-read.csv("Data/Processed/index_forSS_cdd8_nomonth.csv")
+rolling_month<-read.csv("Data/Processed/index_forSS_rolling_nomonth.csv")
 
 # standardize 
 full_notemp$std_full<-full_notemp$obs/mean(full_notemp$obs)
