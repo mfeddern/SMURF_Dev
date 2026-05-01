@@ -78,7 +78,7 @@ ocean <- read.csv('Data/raw_not_confidential/OceanographicIndex/OceanographicInd
   mutate(month = 7, 
          index = ifelse(year >= 2020, flt, -flt) # include 5 years of index
   ) |>
-  select(year, month, index, obs = fit, se_log = se.p)
+  dplyr::select(year, month, index, obs = fit, se_log = se.p)
 
 # data file updates
 sensi_mod$dat$Nfleets <- flt
@@ -176,7 +176,7 @@ flt <- base_model$dat$Nfleets + 1
 
 OCNMS <- read.csv('Data/raw_not_confidential/Estimated-YOY-trend-coast.csv')|>
   rename(Index=grand.mean)|>
-  select(year, Index, SE)|>
+  dplyr::select(year, Index, SE)|>
   mutate(index = flt, month = 7) |>
   rename(se_log = SE,  obs = Index)
   
@@ -493,7 +493,7 @@ ggsave(file.path(outdir, 'sens_summary.png'),  dpi = 300,
 ## comparison plot ----------------------------------------------------------------
 
 SMURF <- read.csv('Data/raw_not_confidential/SMURF index/index_forSS.csv') |>
-  select(year, month, obs, se_log = logse)|>
+  dplyr::select(year, month, obs, se_log = logse)|>
   mutate(index=7)
 no_index<- read.csv('Data/raw_not_confidential/SMURF index/ghost.csv')|>
   mutate(index=7)
@@ -527,7 +527,7 @@ stand<-ggplot(dat_stand%>%filter(index>0)) +
   theme(legend.position = "none")
 
 stand2016<-ggplot(dat_stand2%>%filter(index>0)) +
-  geom_point(aes(x = year, y = Stand, col = Index, pch = Index))+
+  geom_point(aes(x = year, y = Stand, col = Index, pch = Index),size=2)+
   geom_line(aes(x = year, y = Stand, col = Index, pch = Index))+
   ylab("")+
   xlab("")+
@@ -556,6 +556,32 @@ ggsave("Figures/Manuscript/yoyindices.png",  dpi = 300,
 indices
 dev.off() 
 
+loc<-unique(dat_stand2$Index)
+cor_dat_loc<-dat_stand2%>%filter(Index!='No Index')%>%
+  dplyr::select(Stand, Index, year)%>%
+  pivot_wider(names_from=Index, values_from=Stand)
+df.subset <- cor_dat_loc[, names(cor_dat_loc)[(names(cor_dat_loc) %in% loc)]]
+corrplotsat<-cor(df.subset, use = "complete.obs")
+corr_loc<-ggcorrplot::ggcorrplot(corrplotsat)
+corr_plot<-ggcorrplot::ggcorrplot(corrplotsat,
+                          
+                           hc.order = TRUE,
+                           type = "lower",
+                           lab = TRUE,
+                       colors = c("steelblue", "white","darkred" )
+)
+
+
+arranged_yoycorr<-ggarrange(corr_plot, stand2016,ncol = 2, nrow = 1, labels=c("A.", "B."))
+
+pdf(file = "Figures/Manuscript/yoy_corr_indices.pdf", width =9, height =6)
+arranged_yoycorr
+dev.off()
+
+ggsave("Figures/Manuscript/yoy_corr_indices.png",  dpi = 300,  
+       width = 12, height = 5, units = "in", bg="white")
+arranged_yoycorr
+dev.off() 
 
 #### csvs ####
 likelihoods<- sensitivity_output[["likelihoods"]]
