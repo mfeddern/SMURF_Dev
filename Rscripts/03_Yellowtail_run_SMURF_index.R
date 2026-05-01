@@ -265,7 +265,7 @@ summaries <- dat %>%
             tripsWOTarget = sum(SFLA_count==0)) %>%
   mutate(totalTrips = tripsWithTarget+tripsWOTarget,
          percentpos = round(tripsWithTarget/(tripsWithTarget+tripsWOTarget),2)) 
-View(summaries)
+#View(summaries)
 #write.csv(summaries, file.path(dir,  "percent_pos.csv"), row.names=FALSE)
 
 
@@ -304,9 +304,9 @@ dat <- dat %>%
   #mutate(temp_bin = cut(temp_index, breaks=c(-2,-1,0,1,2,3))) %>%
   #mutate(temp_bin = cut(temp_c_mid, breaks=c(6,7,8,9,10,11,15))) %>%
   #mutate(temp_bin = cut(cdd_8, breaks=c(50,60,70,80,90,120))) %>%
-  #mutate(temp_bin = cut(cdd_16, breaks=c(110,125,140,155,170,215))) %>%
+  mutate(temp_bin = cut(cdd_16, breaks=c(110,125,140,155,170,215))) %>%
   #mutate(temp_bin = cut(rolling8d, breaks=c(-1.6,-1,-0.5,0,0.5,2))) %>%
-  mutate(temp_bin = cut(rolling16d, breaks=c(-1.4,-1,-0.5,0,0.5,2.1))) %>%
+  #mutate(temp_bin = cut(rolling16d, breaks=c(-1.4,-1,-0.5,0,0.5,2.1))) %>%
   # remove samples
   filter(year > 2013) %>% # taking out 2011 - 2013 - low sample sizes
   filter(month %in% c(5:7)) %>% # taking out shoulder months with few data/positives
@@ -314,7 +314,7 @@ dat <- dat %>%
 
 # define my covars
 #covars <- c("year", "region", "treatment","month") # full model, starting with no temp data
-covars <- c("year", "region","temp_bin")
+covars <- c("year", "region","temp_bin","month")
 
 #Ensure columns named appropriately and covariates are factors
 dat <- dat %>%
@@ -354,7 +354,7 @@ grid <- expand.grid(
   year = unique(dat$year),
   region = levels(dat$region)[1],
   #treatment = levels(dat$treatment)[1]
-  #month = levels(dat$month)[1],
+  month = levels(dat$month)[1],
   #season = levels(dat$season)[1],
   #Site = levels(dat$Site)[1],
   temp_bin = levels(dat$temp_bin)[1]
@@ -362,7 +362,7 @@ grid <- expand.grid(
 )
 
 fit.nb <- sdmTMB(
-  SFLA_count ~ year + region + temp_bin,
+  SFLA_count ~ year + region + temp_bin+month,
   data = dat,
   offset = dat$logEffort,
   time = "year",
@@ -384,6 +384,12 @@ calc_index(
   fit = fit.nb,
   grid = grid)
 
+index<-calc_index(
+  dir = file.path(dir), 
+  fit = fit.nb,
+  grid = grid)
+
+
 ##### SUPPLEMENTARY TABLES #### 
 
 #View(Model_selection)
@@ -399,7 +405,7 @@ out <- Model_selection %>%
   rename(`Effort offset` = `offset(logEffort)`, 
          `log-likelihood` = logLik) %>%
   rename_with(stringr::str_to_title,-AICc)
-View(out)
+#View(out)
 #write.csv(out, file = file.path(dir,  "model_selection.csv"), row.names = FALSE)
 
 #summary of trips and  percent pos per year
@@ -409,7 +415,7 @@ summaries <- dat %>%
             tripsWOTarget = sum(SFLA_count==0)) %>%
   mutate(totalTrips = tripsWithTarget+tripsWOTarget,
          percentpos = round(tripsWithTarget/(tripsWithTarget+tripsWOTarget),2)) 
-View(summaries)
+#View(summaries)
 #write.csv(summaries, file.path(dir,  "percent_pos.csv"), row.names=FALSE)
 
 
@@ -487,6 +493,80 @@ ggplot(df8,aes(y = Variable,x = Year,color = Index)) +
 #ggsave("temperature (binned) index comparison.png",width = 10,height = 5)
 
 
+#index<-read.csv("Model_Runs/SMURF index models/yellowtail_oregon_SMURF_addcdd_16/index_forSS.csv")
+smurf_index<-ggplot(index,aes(y = est,x = year, group=type)) + 
+  geom_line(aes(y = est,x = year))+
+  geom_point(size = 1.5) +
+  geom_errorbar(data=index,aes(ymin=lwr, ymax=upr),lty=2, width = 0)+
+  labs(y = "Relative Index", x="Year")+
+  theme_bw()
+
+pdf(file = "Figures/Manuscript/smurf_index.pdf", width =7, height =6)
+smurf_index
+dev.off()
+
+ggsave("Figures/Manuscript/smurf_index.png",  dpi = 300,  
+       width = 5, height = 4, units = "in", bg="white")
+smurf_index
+dev.off() 
+
+#### plot with multiple indices
+
+# pull in all three
+cdd16<-read.csv("Model_Runs/SMURF index models/yellowtail_oregon_SMURF_addcdd_16_nomonth/index_forSS.csv")%>%
+  mutate(Model="CDD 16")
+cdd16Month<-read.csv("Model_Runs/SMURF index models/yellowtail_oregon_SMURF_addcdd_16/index_forSS.csv")%>%
+  mutate(Model="CDD 16 + Month")
+notemp<-read.csv("Model_Runs/SMURF index models/yellowtail_oregon_SMURF_full/index_forSS.csv")%>%
+  mutate(Model="Month Only")
+RW16Month<-read.csv("Model_Runs/SMURF index models/yellowtail_oregon_SMURF_addrolling_16/index_forSS.csv")%>%
+  mutate(Model="RW 16 + Month")
+RW16<-read.csv("Model_Runs/SMURF index models/yellowtail_oregon_SMURF_addrolling_16_nomonth/index_forSS.csv")%>%
+  mutate(Model="RW 16")
+cdd8Month<-read.csv("Model_Runs/SMURF index models/yellowtail_oregon_SMURF_addccd8/index_forSS.csv")%>%
+  mutate(Model="CDD 8 + Month")
+cdd8<-read.csv("Model_Runs/SMURF index models/yellowtail_oregon_SMURF_addccd8_nomonth/index_forSS.csv")%>%
+  mutate(Model="CDD 8")
+
+combined_indices<-cdd16%>%
+  bind_rows(notemp)%>%
+  bind_rows(RW16Month)%>%
+  bind_rows(RW16)%>%
+  bind_rows(cdd8Month)%>%
+  bind_rows(cdd16Month)%>%
+  bind_rows(cdd8)
+
+combined_indices<-combined_indices%>%
+  group_by(Model)%>%
+  mutate(standardized=scale(obs))%>%
+  ungroup()
 
 
 
+ggplot(combined_indices,aes(y = obs,x = year,color = Model)) + 
+  geom_line()+
+  geom_point(size = 1.5) +
+  labs(y = "Standardized Index Value")+
+  theme_bw()+
+  theme(panel.border = element_rect(color = "black", fill = NA),
+        axis.title.y=element_text(margin=margin(0,10,0,0)),
+        axis.title.x = element_blank())
+#ggsave("temperature (binned) index comparison.png",width = 10,height = 5)
+
+Model_Comp<-ggplot(combined_indices,aes(y = standardized,x = year,color = Model)) + 
+  geom_line()+
+  geom_point(size = 1.5) +
+  labs(y = "Standardized Index Value")+
+  theme_bw()+
+  theme(panel.border = element_rect(color = "black", fill = NA),
+        axis.title.y=element_text(margin=margin(0,10,0,0)),
+        axis.title.x = element_blank())
+
+pdf(file = "Figures/Manuscript/smurf_comp.pdf", width =7, height =6)
+Model_Comp
+dev.off()
+
+ggsave("Figures/Manuscript/smurf_comp.png",  dpi = 300,  
+       width = 5, height = 4, units = "in", bg="white")
+Model_Comp
+dev.off() 
