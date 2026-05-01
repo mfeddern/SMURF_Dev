@@ -34,6 +34,9 @@ library(ggeffects)
 library(tidybayes)
 library(gridExtra)
 library(fitdistrplus)
+library(ggpubr)
+library(png)
+library(grid)
 
 #species and area identifiers - eventually put in function
 pacfinSpecies <- "YTRF"
@@ -572,3 +575,25 @@ ggsave("Figures/Manuscript/smurf_comp.png",  dpi = 300,
        width = 7, height = 4, units = "in", bg="white")
 Model_Comp
 dev.off() 
+
+
+#### combining qq plots ####
+
+# Read the images
+cdd16qq<-readPNG("Model_Runs/SMURF index models/yellowtail_oregon_SMURF_addcdd_16_nomonth/qq.PNG")
+cdd16Monthqq<-readPNG("Model_Runs/SMURF index models/yellowtail_oregon_SMURF_addcdd_16/qq.PNG")
+RW16Monthqq<-readPNG("Model_Runs/SMURF index models/yellowtail_oregon_SMURF_addrolling_16/qq.PNG")
+RW16qq<-readPNG("Model_Runs/SMURF index models/yellowtail_oregon_SMURF_addrolling_16_nomonth/qq.PNG")
+cdd8Monthqq<-readPNG("Model_Runs/SMURF index models/yellowtail_oregon_SMURF_addccd8/qq.PNG")
+cdd8qq<-readPNG("Model_Runs/SMURF index models/yellowtail_oregon_SMURF_addccd8_nomonth/qq.PNG")
+# Convert to grobs
+grobcdd16 <- rasterGrob(cdd16qq)
+grobcdd16Month <- rasterGrob(cdd16Monthqq)
+grobcdd8 <- rasterGrob(cdd8qq)
+grobcdd8Month <- rasterGrob(cdd8Monthqq)
+grobRW16Monthqq <- rasterGrob(RW16Monthqq)
+grobcddRW16qq<- rasterGrob(RW16qq)
+
+annotate_figure(grobcdd16,text_grob("CDD 16", face = "bold", size = 14))
+
+ggarrange(grobcdd16, grobcdd16Month, ncol = 2)
