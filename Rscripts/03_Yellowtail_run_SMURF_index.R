@@ -2,7 +2,8 @@
 #########################################################################
 ### Run the combined SMURF and ODFW oceanography data to get an index of abundance
 ### Yellowtail rockfish assessment 2025
-### Original script - Melissa Monk (SWFSC), edited by Alison Whitman (ODFW)
+### Original script - Melissa Monk (SWFSC), edited by Alison Whitman (ODFW) &
+### Megan L. Feddern (NWFSC)
 #########################################################################
 # updated by A. Whitman 02/20/2025
 # to use new oceanography variables from Megan Feddern (NMFS)
@@ -10,6 +11,7 @@
 # updated on 2/20 to finalize candidate models 
 # updated on 2/28 to include final oceanography variables (16d) and run final tables 
 # updated on 4/24/2026 to re-run a model we missed!
+# updated on 5/1/2026 by MLF to incorporate into a new reproducible repo for manuscript and modify figures
 
 rm(list = ls(all = TRUE))
 graphics.off()
@@ -567,6 +569,6 @@ Model_Comp
 dev.off()
 
 ggsave("Figures/Manuscript/smurf_comp.png",  dpi = 300,  
-       width = 5, height = 4, units = "in", bg="white")
+       width = 7, height = 4, units = "in", bg="white")
 Model_Comp
 dev.off() 
